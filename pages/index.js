@@ -7,12 +7,13 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [loading, setLoading] = useState(false); // State to manage loading
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
 
   // Fetch project IDs when the component mounts
   useEffect(() => {
     const fetchProjectIds = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:8000/rag/load/projects/");
+        const response = await axios.get(`${apiBaseUrl}/rag/load/projects/`);
         console.log("Project IDs:", response.data.project_ids);
         setProjectIdArray(response.data.project_ids); // Update state with fetched project IDs
       } catch (error) {
@@ -35,7 +36,7 @@ export default function Home() {
         setLoading(true); // Start loading when sending a message
       console.log("Project ID:", projectId);
       console.log("Sending message:", input);
-      const response = await axios.post("http://127.0.0.1:8000/rag/retrieve/chat/", {
+      const response = await axios.post(`${apiBaseUrl}/rag/retrieve/chat/`, {
         project_id: projectId,
         user_input: input,
       });

@@ -7,6 +7,7 @@ export default function UploadPage() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
 
   const handleSubmit = async (e) => {
     
@@ -26,7 +27,7 @@ export default function UploadPage() {
     formData.append("file", file);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/rag/load/document/", {
+      const res = await fetch(`${apiBaseUrl}/rag/load/document/`, {
         method: "POST",
         body: formData,
       });
@@ -55,6 +56,7 @@ return (
                     onChange={(e) => setProjectId(e.target.value)}
                     className="w-full border rounded p-2"
                     required
+                    placeholder="Masukkan Project ID"
                 />
             </div>
             <div>
