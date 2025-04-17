@@ -1,113 +1,144 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              pages/index.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [projectId, setProjectId] = useState("");
+  const [projectIdArray, setProjectIdArray] = useState([]); // Use state for projectIdArray
+  const [input, setInput] = useState("");
+  const [chatHistory, setChatHistory] = useState([]);
+  const [loading, setLoading] = useState(false); // State to manage loading
+
+  // Fetch project IDs when the component mounts
+  useEffect(() => {
+    const fetchProjectIds = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/rag/load/projects/");
+        console.log("Project IDs:", response.data.project_ids);
+        setProjectIdArray(response.data.project_ids); // Update state with fetched project IDs
+      } catch (error) {
+        console.error("Error fetching project IDs:", error);
+      }
+    };
+
+    fetchProjectIds();
+  }, []); // Empty dependency array ensures this runs only once when the component mounts
+
+  const sendMessage = async () => {
+    if (!projectId || !input) return;
+
+    chatHistory.push({
+      type: "human",
+      content: input,
+    });
+
+    try {
+        setLoading(true); // Start loading when sending a message
+      console.log("Project ID:", projectId);
+      console.log("Sending message:", input);
+      const response = await axios.post("http://127.0.0.1:8000/rag/retrieve/chat/", {
+        project_id: projectId,
+        user_input: input,
+      });
+      console.log("Response:", response.data);
+        chatHistory.push({
+            type: "bot",
+            content: response.data.response.answer,
+        });
+    //   setChatHistory(response.data.response.chat_history);
+      setInput(""); // Reset input after sending the message
+      setLoading(false); // Stop loading after receiving the response 
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+return (
+    <div className="flex flex-col items-center min-h-screen p-8 bg-gray-100">
+        <h1 className="text-2xl font-bold mb-4 text-emerald-950">💬 RAG Chatbot</h1>
+
+        {/* Select Project ID */}
+        <select
+            value={projectId}
+            onChange={(e) => {
+                setProjectId(e.target.value);
+                setInput(""); // Reset input when project ID changes
+                setChatHistory([]); // Reset chat history when project ID changes
+            }}
+            className="border p-2 w-80 mb-4 rounded-md text-black"
+        >
+            <option value="" disabled>
+                Pilih Project ID...
+            </option>
+            {projectIdArray.map((id, index) => (
+                <option key={index} value={id}>
+                    {id}
+                </option>
+            ))}
+        </select>
+
+        {/* Chat Window */}
+        <div className="w-80 h-96 bg-white p-4 shadow-md rounded-md overflow-y-auto mb-4">
+            {chatHistory.map((chat, index) => (
+                <div key={index} className={`mb-2 ${chat.type === "human" ? "text-right" : "text-left"}`}>
+                    <p className={`p-2 rounded-md inline-block text-black ${chat.type === "human" ? "bg-blue-300" : "bg-gray-300"}`}>
+                        {chat.content}
+                    </p>
+                </div>
+            ))}
+            {/* add loading dot animation for wating the answer from bot */}
+            {loading && (
+                <div  className="mb-2 text-left">
+                    <p className="p-2 rounded-md inline-block text-black bg-gray-300">
+                        <span className="animate-pulse">Waiting...</span>
+                    </p>
+                </div>
+            )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Input Chat */}
+        <div className="flex w-80">
+            <input
+                type="text"
+                placeholder="Ketik pesan..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                        sendMessage();
+                    }
+                }}
+                className="border p-2 flex-grow rounded-l-md text-black bg-white"
+            />
+            <button
+                onClick={sendMessage}
+                className="bg-blue-500 text-white px-4 rounded-r-md"
+            >
+                {loading ? (
+                    <svg
+                        className="animate-spin h-5 w-5 mr-2 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                        ></circle>
+                        <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        ></path>
+                    </svg>
+                ) : (
+                    "Kirim"
+                )}
+            </button>
+        </div>
     </div>
-  );
+);
 }
