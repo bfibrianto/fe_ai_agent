@@ -1,145 +1,33 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import Image from "next/image";
 
 export default function Home() {
-  const [projectId, setProjectId] = useState("");
-  const [projectIdArray, setProjectIdArray] = useState([]); // Use state for projectIdArray
-  const [input, setInput] = useState("");
-  const [chatHistory, setChatHistory] = useState([]);
-  const [loading, setLoading] = useState(false); // State to manage loading
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
-
-  // Fetch project IDs when the component mounts
-  useEffect(() => {
-    const fetchProjectIds = async () => {
-      try {
-        const response = await axios.get(`${apiBaseUrl}/rag/load/projects/`);
-        console.log("Project IDs:", response.data.project_ids);
-        setProjectIdArray(response.data.project_ids); // Update state with fetched project IDs
-      } catch (error) {
-        console.error("Error fetching project IDs:", error);
-      }
-    };
-
-    fetchProjectIds();
-  }, []); // Empty dependency array ensures this runs only once when the component mounts
-
-  const sendMessage = async () => {
-    if (!projectId || !input) return;
-
-    chatHistory.push({
-      type: "human",
-      content: input,
-    });
-
-    try {
-        setLoading(true); // Start loading when sending a message
-      console.log("Project ID:", projectId);
-      console.log("Sending message:", input);
-      const response = await axios.post(`${apiBaseUrl}/rag/retrieve/chat/`, {
-        project_id: projectId,
-        user_input: input,
-      });
-      console.log("Response:", response.data);
-        chatHistory.push({
-            type: "bot",
-            content: response.data.response.answer,
-        });
-    //   setChatHistory(response.data.response.chat_history);
-      setInput(""); // Reset input after sending the message
-      setLoading(false); // Stop loading after receiving the response 
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-return (
-    <div className="flex flex-col items-center min-h-screen p-8 bg-gray-100">
-        <h1 className="text-2xl font-bold mb-4 text-emerald-950">💬 RAG Chatbot</h1>
-
-        {/* Select Project ID */}
-        <select
-            value={projectId}
-            onChange={(e) => {
-                setProjectId(e.target.value);
-                setInput(""); // Reset input when project ID changes
-                setChatHistory([]); // Reset chat history when project ID changes
-            }}
-            className="border p-2 w-80 mb-4 rounded-md text-black"
-        >
-            <option value="" disabled>
-                Pilih Project ID...
-            </option>
-            {projectIdArray.map((id, index) => (
-                <option key={index} value={id}>
-                    {id}
-                </option>
-            ))}
-        </select>
-
-        {/* Chat Window */}
-        <div className="w-80 h-96 bg-white p-4 shadow-md rounded-md overflow-y-auto mb-4">
-            {chatHistory.map((chat, index) => (
-                <div key={index} className={`mb-2 ${chat.type === "human" ? "text-right" : "text-left"}`}>
-                    <p className={`p-2 rounded-md inline-block text-black ${chat.type === "human" ? "bg-blue-300" : "bg-gray-300"}`}>
-                        {chat.content}
-                    </p>
-                </div>
-            ))}
-            {/* add loading dot animation for wating the answer from bot */}
-            {loading && (
-                <div  className="mb-2 text-left">
-                    <p className="p-2 rounded-md inline-block text-black bg-gray-300">
-                        <span className="animate-pulse">Waiting...</span>
-                    </p>
-                </div>
-            )}
-        </div>
-
-        {/* Input Chat */}
-        <div className="flex w-80">
-            <input
-                type="text"
-                placeholder="Ketik pesan..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                        sendMessage();
-                    }
-                }}
-                className="border p-2 flex-grow rounded-l-md text-black bg-white"
-            />
-            <button
-                onClick={sendMessage}
-                className="bg-blue-500 text-white px-4 rounded-r-md"
-            >
-                {loading ? (
-                    <svg
-                        className="animate-spin h-5 w-5 mr-2 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                        ></circle>
-                        <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                        ></path>
+    return (
+        <div className="flex flex-col items-center justify-center h-screen">
+            <h1 className="mb-5 text-2xl font-bold">Pilih Menu Untuk Memulai</h1>
+            <div className="flex gap-5">
+                <div
+                    className="flex flex-col items-center p-5 border border-white shadow-md rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => window.location.href = "/chat"}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-12 h-12">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                     </svg>
-                ) : (
-                    "Kirim"
-                )}
-            </button>
+                    <p className="mt-2 text-lg font-medium">Chat</p>
+                    {/* Deskripsi fitur */}
+                    <p className="mt-1 text-sm text-center">Tanya jawab dengan AI dengan custom context</p>
+                </div>
+                <div
+                    className="flex flex-col items-center p-5 border border-white shadow-md rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => window.location.href = "/upload"}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-12 h-12">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3-3-3m0 0-3 3m3-3V15" />
+                    </svg>
+                    <p className="mt-2 text-lg font-medium">Upload</p>
+                    {/* Deskripsi fitur */}
+                    <p className="mt-1 text-sm text-center">Upload dokumen untuk konteks chat</p>
+                </div>
+            </div>
         </div>
-    </div>
-);
+    )
 }
