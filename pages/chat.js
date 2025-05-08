@@ -13,9 +13,13 @@ export default function Home() {
   useEffect(() => {
     const fetchProjectIds = async () => {
       try {
-        const response = await axios.get(`${apiBaseUrl}/rag/load/projects/`);
-        console.log("Project IDs:", response.data.project_ids);
-        setProjectIdArray(response.data.project_ids); // Update state with fetched project IDs
+        const response = await fetch("/api/projects"); // Panggil API route
+        if (!response.ok) {
+          throw new Error("Failed to fetch project IDs");
+        }
+        const data = await response.json();
+        console.log("Project IDs:", data.project_ids);
+        setProjectIdArray(data.project_ids); // Update state dengan data dari server
       } catch (error) {
         console.error("Error fetching project IDs:", error);
       }
@@ -36,14 +40,26 @@ export default function Home() {
         setLoading(true); // Start loading when sending a message
       console.log("Project ID:", projectId);
       console.log("Sending message:", input);
-      const response = await axios.post(`${apiBaseUrl}/rag/retrieve/chat/`, {
+    const response = await fetch(`api/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         project_id: projectId,
         user_input: input,
-      });
-      console.log("Response:", response.data);
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch chat response");
+    }
+
+    const body = await response.json();
+      console.log("Response:", body);
         chatHistory.push({
             type: "bot",
-            content: response.data.response.answer,
+            content: body.response.answer,
         });
     //   setChatHistory(response.data.response.chat_history);
       setInput(""); // Reset input after sending the message

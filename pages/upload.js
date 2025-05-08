@@ -13,12 +13,17 @@ export default function UploadPage() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
 
   // Fetch project IDs when the component mounts
+  // Fetch project IDs when the component mounts
   useEffect(() => {
     const fetchProjectIds = async () => {
       try {
-        const response = await axios.get(`${apiBaseUrl}/rag/load/projects/`);
-        console.log("Project IDs:", response.data.project_ids);
-        setProjectIdArray(response.data.project_ids); // Update state with fetched project IDs
+        const response = await fetch("/api/projects"); // Panggil API route
+        if (!response.ok) {
+          throw new Error("Failed to fetch project IDs");
+        }
+        const data = await response.json();
+        console.log("Project IDs:", data.project_ids);
+        setProjectIdArray(data.project_ids); // Update state dengan data dari server
       } catch (error) {
         console.error("Error fetching project IDs:", error);
       }
@@ -45,7 +50,7 @@ export default function UploadPage() {
     formData.append("file", file);
 
     try {
-      const res = await fetch(`${apiBaseUrl}/rag/load/document/`, {
+      const res = await fetch(`api/upload/`, {
         method: "POST",
         body: formData,
       });
@@ -73,7 +78,7 @@ return (
                     value={projectId}
                     onChange={(e) => setProjectId(e.target.value)}
                     className="w-full border rounded p-2"
-                    required
+                    required={!isExisting} // Make it required if checkbox is not checked
                     placeholder="Masukkan Project ID"
                     disabled={isExisting} // Disable input if checkbox is checked
                 />
@@ -102,7 +107,7 @@ return (
                     value={projectId}
                     onChange={(e) => setProjectId(e.target.value)}
                     className="w-full border rounded p-2"
-                    required
+                    required={isExisting}
                 >
                     <option value="" disabled>Pilih Project ID</option>
                     {projectIdArray.map((id) => (
